@@ -88,6 +88,31 @@ app.post("/sensor-data", async (req, res) => {
     }
 });
 
+// ========= NUEVO ENDPOINT =========
+// Obtener la última medición de un dispositivo
+app.get("/sensor-data/:deviceId/latest", async (req, res) => {
+    try {
+        const { deviceId } = req.params;
+        const latestData = await SensorData.findOne({ deviceId })
+            .sort({ timestamp: -1 });
+
+        // Si no hay datos, devolvemos un objeto con valores nulos (no error)
+        if (!latestData) {
+            return res.json({
+                deviceId,
+                temperature: null,
+                humidity: null,
+                timestamp: null
+            });
+        }
+
+        res.json(latestData);
+    } catch (error) {
+        console.error("Error obteniendo último dato:", error);
+        res.status(500).json({ error: "Error obteniendo último dato del sensor" });
+    }
+});
+
 /* =========================
    SERVIDOR
 ========================= */
@@ -97,6 +122,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en puerto ${PORT}`);
 });
-/* =========================
-   SERVIDOR
-========================= */
