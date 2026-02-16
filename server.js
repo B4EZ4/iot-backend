@@ -58,10 +58,11 @@ app.post("/device-state", async (req, res) => {
     try {
         const { deviceId, led } = req.body;
 
+        // ✅ Corregido: usar returnDocument en lugar de new
         const updated = await DeviceState.findOneAndUpdate(
             { deviceId },
             { led, updatedAt: new Date() },
-            { upsert: true, new: true }
+            { upsert: true, returnDocument: 'after' }
         );
 
         res.json(updated);
@@ -112,7 +113,6 @@ app.get("/sensor-data/:deviceId/latest", async (req, res) => {
     }
 });
 
-// ========= NUEVO ENDPOINT: HISTORIAL =========
 // Obtener historial de lecturas de un dispositivo
 app.get("/sensor-data/:deviceId", async (req, res) => {
     try {
@@ -136,6 +136,34 @@ app.get("/sensor-data/:deviceId", async (req, res) => {
 });
 
 /* =========================
+   TAREA DE LIMPIEZA AUTOMÁTICA
+   Elimina registros mayores a 1 año
+========================= */
+
+async function cleanOldData() {
+    try {
+        const oneYearAgo = new Date();
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+        const result = await SensorData.deleteMany({
+            timestamp: { $lt: oneYearAgo }
+        });
+
+        if (result.deletedCount > 0) {
+            console.log(`🗑️  Limpieza automática: ${result.deletedCount} registros eliminados (> 1 año)`);
+        }
+    } catch (error) {
+        console.error("Error en limpieza automática:", error);
+    }
+}
+
+// Ejecutar limpieza cada 24 horas
+setInterval(cleanOldData, 24 * 60 * 60 * 1000);
+
+// Ejecutar limpieza al iniciar el servidor
+cleanOldData();
+
+/* =========================
    SERVIDOR
 ========================= */
 
@@ -143,4 +171,5 @@ const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en puerto ${PORT}`);
+    console.log(`Limpieza automática activada (registros > 1 año)`);
 });
