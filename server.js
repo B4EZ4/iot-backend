@@ -135,6 +135,24 @@ app.get("/sensor-data/:deviceId", async (req, res) => {
     }
 });
 
+// ========= NUEVO ENDPOINT: LIMPIAR HISTORIAL =========
+// Eliminar todos los registros de sensor data de un dispositivo
+app.delete("/sensor-data/:deviceId", async (req, res) => {
+    try {
+        const { deviceId } = req.params;
+
+        const result = await SensorData.deleteMany({ deviceId });
+
+        res.json({
+            message: "Historial eliminado correctamente",
+            deletedCount: result.deletedCount
+        });
+    } catch (error) {
+        console.error("Error eliminando historial:", error);
+        res.status(500).json({ error: "Error eliminando historial" });
+    }
+});
+
 /* =========================
    TAREA DE LIMPIEZA AUTOMÁTICA
    Elimina registros mayores a 1 año
