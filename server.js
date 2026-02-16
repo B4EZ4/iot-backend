@@ -88,7 +88,6 @@ app.post("/sensor-data", async (req, res) => {
     }
 });
 
-// ========= NUEVO ENDPOINT =========
 // Obtener la última medición de un dispositivo
 app.get("/sensor-data/:deviceId/latest", async (req, res) => {
     try {
@@ -110,6 +109,29 @@ app.get("/sensor-data/:deviceId/latest", async (req, res) => {
     } catch (error) {
         console.error("Error obteniendo último dato:", error);
         res.status(500).json({ error: "Error obteniendo último dato del sensor" });
+    }
+});
+
+// ========= NUEVO ENDPOINT: HISTORIAL =========
+// Obtener historial de lecturas de un dispositivo
+app.get("/sensor-data/:deviceId", async (req, res) => {
+    try {
+        const { deviceId } = req.params;
+        const limit = parseInt(req.query.limit) || 100;
+
+        const data = await SensorData.find({ deviceId })
+            .sort({ timestamp: -1 })
+            .limit(limit);
+
+        // Si no hay datos, devolver array vacío
+        if (!data || data.length === 0) {
+            return res.json([]);
+        }
+
+        res.json(data);
+    } catch (error) {
+        console.error("Error obteniendo historial:", error);
+        res.status(500).json({ error: "Error obteniendo historial" });
     }
 });
 
