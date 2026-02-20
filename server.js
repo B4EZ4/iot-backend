@@ -154,6 +154,41 @@ app.delete("/sensor-data/:deviceId", async (req, res) => {
 });
 
 /* =========================
+   RUTAS DE DESARROLLO (DEV)
+   Funcionalidades para administración y pruebas
+========================= */
+
+// Descargar dataset completo (todos los sensores)
+app.get("/dev/dataset", async (req, res) => {
+    try {
+        const data = await SensorData.find().sort({ timestamp: -1 });
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: "Error descargando dataset" });
+    }
+});
+
+// Limpiar TODOS los registros del servidor (Reset total de datos)
+app.delete("/dev/reset-server", async (req, res) => {
+    try {
+        // Eliminar todos los datos de sensores
+        await SensorData.deleteMany({});
+        // Opcional: Eliminar estados de dispositivos si se requiere limpieza total
+        // await DeviceState.deleteMany({}); 
+
+        res.json({ message: "Servidor limpio: todos los registros de sensores han sido eliminados" });
+    } catch (error) {
+        res.status(500).json({ error: "Error limpiando servidor" });
+    }
+});
+
+// Endpoint de confirmación para limpieza local (Señalización)
+app.post("/dev/reset-local", async (req, res) => {
+    // Este endpoint no borra nada en el servidor, solo confirma la acción al cliente
+    res.json({ action: "clear_local", message: "Autorización concedida para limpieza local" });
+});
+
+/* =========================
    TAREA DE LIMPIEZA AUTOMÁTICA
    Elimina registros mayores a 1 año
 ========================= */
